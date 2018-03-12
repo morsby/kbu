@@ -1,3 +1,8 @@
+.RData
+.RHistory
+rsconnect/
+googlekey.txt
+
 # Logs
 logs
 *.log
@@ -56,4 +61,3 @@ typings/
 
 # dotenv environment variables file
 .env
-
