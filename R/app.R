@@ -6,10 +6,28 @@ library(gmodels) # For CI calc
 library(markdown) # For markdownToHTML function
 
 # Forbered data
-
 load("dk-map.RData")
 data <- read.csv("data.csv")
 
+# Rengør runder:
+data$runde <- gsub("(https://www.basislaege.dk/Ajax_get)|(.asp)", "", data$runde)
+data$runde <- gsub(" ", "", data$runde)
+
+specialer <- unique(c(as.character(data$Speciale),as.character(data$Speciale2)))
+
+for (i in 1:nrow(data)) {
+    data[i, "Specialer"] <- paste(sort(c(as.character(data[i, "Speciale"]), as.character(data[i, "Speciale2"]))), sep=", ", collapse=", ")
+    
+    if(grepl("v1", data[i, "runde"])) {
+      data[i, "Runde"] <- as.Date(paste0(substr(data[i, "runde"],0,4),"-02-01"))
+    } else {
+      data[i, "Runde"] <- as.Date(paste0(substr(data[i, "runde"],0,4),"-08-01"))
+    }
+    
+}
+
+runder <- sort(unique(data[, "Runde"]), decreasing = TRUE)
+speciale.komb <- unique(data[, "Specialer"])
 
 # Pool byer
 byer <- list(
@@ -65,29 +83,24 @@ for(i in 1:length(byer)) {
 
 
 data <- data %>% 
-    group_by(runde) %>% 
+    group_by(Runde) %>% 
     mutate(PlaceringIAar = 1-Nummer/max(Nummer)) %>% 
     group_by(Område) %>% 
     mutate(Popularitet=mean(PlaceringIAar))
 
-#data %>% group_by(Uddannelsessted) %>% 
-#    summarise(Gennemsnit = mean(Nummer), sd=sd(Nummer), n=n()) %>%
-#    mutate(se=sd/n,
-#           lower=Gennemsnit - qt(1 - (0.05 / 2), n - 1) * se,
-#           upper = Gennemsnit + qt(1 - (0.05 / 2), n - 1) * se) 
-
 server <- function(input, output) {
-    
+  filtered.data <- reactive(filter(data, Område %in% input$byer & Specialer %in% input$specialer & format(Runde) %in% input$runder))
+  
     # Map
     output$map <- renderPlot({
         ggmap(map) + 
-            geom_point(data=subset(data, Område %in% input$byer), aes(x=lon, y=lat, color=Popularitet), size=3) +
+            geom_point(data=filtered.data(), aes(x=lon, y=lat, color=Popularitet), size=3) +
             theme_void()
     })
     
     # Density
     densityPlot <-  reactive({
-        ggplot(data=subset(data, Område %in% input$byer), aes(x=PlaceringIAar, color=Område, fill=Område)) + 
+        ggplot(data=filtered.data(), aes(x=PlaceringIAar, color=Område, fill=Område)) + 
             geom_density(alpha=0.2) +
             ggtitle("Popularitet for valgte byer") + 
             labs(y="Popularitet (densitet)", x="Hvornår stedet er blevet valgt. 0=Sidst, 1=Først") +
@@ -125,7 +138,7 @@ server <- function(input, output) {
     # Boxplot
     output$boxplot <- renderPlot({
         if(length(input$byer) > 0) {
-            ggplot(data=subset(data, Område %in% input$byer), aes(x=Område, y=PlaceringIAar, fill=Område)) + 
+            ggplot(data=filtered.data(), aes(x=Område, y=PlaceringIAar, fill=Specialer)) + 
                 geom_boxplot(alpha=0.2) + 
                 coord_flip() +
                 ylim(0,1) +
@@ -133,19 +146,25 @@ server <- function(input, output) {
                 geom_hline(yintercept=intercept())
         }
     })
-
-    # Tabel over denstet - benyttes ikke
-    output$dens <- renderTable({
-        if(length(input$byer) > 0) {
-            auc() %>% filter(x <= intercept()) %>% group_by(By) %>% summarise(Sum=sum(auc))
-        }
+    
+    # Graf der viser udviklingen
+    output$tidsudvikling <- renderPlot({
+      if(length(input$byer) > 0) {
+        
+        ggplot(data=filter(data, Område %in% input$byer & Specialer %in% input$specialer), aes(x=Runde, y=PlaceringIAar, color=Område)) + 
+          geom_point() + geom_smooth() +
+          geom_hline(yintercept=intercept()) +
+          labs(y="Popularitet. 0=Mindst, 1=Størst", x="") +
+          ylim(0,1) 
+      }
     })
+    
     
     # Boxplot for sidste plads i byen
     output$lastPlot <- renderPlot({
         if(length(input$byer) > 0) {
             mins <- data %>% filter(Område %in% input$byer) %>% 
-                group_by(Område, runde) %>% 
+                group_by(Område, Runde) %>% 
                 summarise(Min=min(PlaceringIAar))
             
             ggplot(data=mins, aes(x=Område, y=Min, fill=Område)) + 
@@ -161,7 +180,7 @@ server <- function(input, output) {
     output$lastTable <- renderTable({
         if(length(input$byer) > 0) {
              data %>% filter(Område %in% input$byer) %>% 
-                group_by(Område, runde) %>% 
+                group_by(Område, Runde) %>% 
                 summarise(Min=min(PlaceringIAar)) %>% 
                 group_by(Område) %>% 
                 summarise(
@@ -174,7 +193,7 @@ server <- function(input, output) {
 }
 
 ui <- fluidPage(
-    titlePanel("KBU-statistik 2010-2017"),
+    titlePanel("KBU-statistik 2010-2018"),
     
     HTML(markdownToHTML(fragment.only=TRUE, text=c(
 "Denne lille interaktive hjemmeside indeholder statistik over KBU-fordelinger siden 2010. 
@@ -187,11 +206,12 @@ tidligt valgt forløb have en værdi tæt på 1, mens et sent valgt forløb vil 
 Alle hospitaler er poolet i byer. Så alle hospitaler i København vil være at findes under KBH,
 alle hospitaler i Aarhus vil ligeledes være under ét. 
 
-P.t. er der ikke taget højde for specialer på nogen måde men udelukkende geografi.
-
 I menuen til venstre bedes du indtaste dit (eller et fiktivt) nummer samt hvor mange numre,
 der totalt er i denne runde. Dette vil tilføje nogle vertikale linjer på graferne, der viser
 hvor det angivne nummer falder.
+
+Jeg fralægger mig naturligvis ethvert ansvar for rigtigheden af disse data og garanterer intet ifht. at 
+benytte dem til at forudsige fremtidige runders udfald.
 "
     ))),
     
@@ -199,10 +219,15 @@ hvor det angivne nummer falder.
         sidebarPanel(
             h4("Vælg dine input"),
             textInput("nr", "Dit nummer:", "1"),
-            textInput("nrTot", "Hvor mange har trukket:", "643"),
+            textInput("nrTot", "Hvor mange har trukket:", "604"),
             textOutput("nummer"),
             HTML("<br><br>"),
-            checkboxGroupInput("byer", "Hvilke byer vil du se?", choices=sort(names(byer)))
+            checkboxGroupInput("specialer", "Hvilke specialekombinationer er du interesseret i? 
+                               Bemærk at ikke alle byer har alle specialekombinationer, og at 
+                               forskellige byer kan kalde den samme kombination forskellige ting.",
+                               choices=sort(speciale.komb), selected="[1]"),
+            checkboxGroupInput("byer", "Hvilke byer vil du se?", choices=sort(names(byer))),
+            checkboxGroupInput("runder", "Hvilke runder skal inkluderes?", choices=runder, selected=first(runder))
         ),
         mainPanel(
                   h4("Placering på kort"),
@@ -213,24 +238,41 @@ hvor det angivne nummer falder.
                   HTML("<br><br>"),
                   h4("Hvornår vælges de valgte byer normalt?"),
                   plotOutput("density"), 
+                  div(
+                    p("I grafen ovenfor vises populariteten af de valgte byer med alle valgte speicaler. Plottet er 
+                      et såkaldt Kernel Density Plot. Det skal læses som, at der hvor Y-værdien er højest,
+                      er stedet mest populært. Arealet under kurven (integralet) mellem to punkter svarer
+                      til sandsynligheden for, at stedet er valgt med et nummer i det interval.")
+                  ),
+                  h4("Hvor populære er de valgte specialer så i byerne?"),
                   plotOutput("boxplot"),
                   div(
-                      p("I graferne ovenfor vises populariteten af de valgte byer. 
-                        Det øverste plot er et Kernel Density Plot. Der hvor Y-værdien er højest,
-                        er stedet mest populært. Arealet under kurven (integralet) mellem to punkter
-                        svarer til sandsynligheden for at stedet er valgt med et nummer i det interval"),
-                      p("Samme data vises i boksplottet, der er mere intuitivt at få fornuft ud af:
-                        Der vises 25%, 50% og 75% percentiler. Enderne af plottet er ved den mest ekstreme
-                        værdi, der ikke er mere end 1.5 gange IQR.")
+                    
+                      p("Boksplottet viser 25%, 50% og 75% percentiler. Enderne af plottet er ved den mest ekstreme
+                        værdi, der ikke er mere end 1.5 gange IQR. Bemærk, at ikke alle byer nødvendigvis har de 
+                        ønskede specialer, hvorfor de ikke vil være på grafen.")
                   ),
                   
                   HTML("<br><br>"),
-                  h4("Hvornår går den SIDSTE plads i byerne?"),
+                  h4("Hvordan er udvilkingen over tid i byerne?"),
+                  plotOutput("tidsudvikling"),
+                  div(
+                    p("Plottet ovenfor viser alle de forløb, der opfylder kriterierne valgt i menuen uden at differentiere
+                      mellem specialer. X-værdierne svarer til et omtrentligt starttidspunkt (enten februar eller september).
+                      Y-værdierne er så hvornår de enkelte forløb er valgt. Der er tilføjet en Loess trendline (der lettere 
+                      kan opfange sporadiske ændringer end en lineær) for at få lidt styr på udviklingen.")
+                  ),
+                  
+                  
+                  HTML("<br><br>"),
+                  h4("Hvornår går den SIDSTE plads i byerne uanset speciale?"),
                   div(
                       p("Nedenstående data viser, hvornår den SIDSTE plads er gået for hver
                         by. I tabellen vises gennemsnittet for alle runder samt konfidensintervallet og SE hertil."),
                         
-                      p("I boksplottet her vises fordelingen af det sidste nummer i hver runde, der har valgt en given by.")
+                      p("I boksplottet her vises fordelingen af det sidste nummer i hver runde, der har valgt en given by."),
+                      p("Hvis du ønsker at se disse data for kun de valgte specialer, henvises til grafen over udvikling
+                        over tid. Her er det nederste punkt det sidst valgte forløb.")
                   ),
                   tableOutput("lastTable"), 
                   plotOutput("lastPlot")

@@ -21,12 +21,12 @@ data[is.na(data$Nummer), "Nummer"] <- 0
 # Alt med google kan kræve et par forsøg (dvs. geocode og get_map funktioner)
 
 # Skaf DK-kort
-dk <- geocode("Denmark", output="more")
-map <- get_map(c(
-    dk[1,"west"],
-    dk[1, "south"],
-    dk[1, "east"],
-    dk[1, "north"]))
+#dk <- geocode("Denmark", output="more")
+#map <- get_map(c(
+#    dk[1,"west"],
+#    dk[1, "south"],
+#    dk[1, "east"],
+#    dk[1, "north"]))
 
 register_google(key=readtext("googlekey.txt")$text)
 
@@ -44,6 +44,6 @@ geocodes$Uddannelsessted <- steder
 combined <- merge(data, geocodes)
 
 saveData <- function(map, data) {
-    save(map, "dk-map.RData")
+    save(map, file="dk-map.RData")
     write.csv(data, "data.csv", row.names = F)
 }
