@@ -2,13 +2,14 @@ library(jsonlite)
 library(dplyr)
 library(tidyr)
 library(ggplot2)
+library(googleway)
 library(ggmap)
 library(readtext)
 
 setwd("~/Applications/Git/KBU-Stats/R")
 
 # Read data
-data <- fromJSON("../kbu.json")
+data <- fromJSON("../data.json")
 # Split columns
 data <- data %>% separate(Lodtr., c("Nummer", "Uni"), "[\\s]")
 data$Nummer <- as.numeric(data$Nummer)
@@ -35,7 +36,7 @@ register_google(key=readtext("googlekey.txt")$text)
 steder <- unique(data$Uddannelsessted)
 
 # For hvert sted; find geokoden
-geocodes <- geocode(steder)
+geocodes <- geocode(steder, output="latlon", source="google")
 
 # Tilføj stednavne til geocodes
 geocodes$Uddannelsessted <- steder
@@ -43,7 +44,12 @@ geocodes$Uddannelsessted <- steder
 # Kombiner data med geocodes ud fra stednavn
 combined <- merge(data, geocodes)
 
-saveData <- function(map, data) {
+saveData <- function(map = NULL, data = NULL) {
+  if(!is.null(map)) {
     save(map, file="dk-map.RData")
+  }
+  if(!is.null(data)) {
     write.csv(data, "data.csv", row.names = F)
+  }
 }
+
