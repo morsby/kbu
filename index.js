@@ -21,7 +21,8 @@ const kbus = [
     "https://www.basislaege.dk/Ajax_get2016v2.asp",
     "https://www.basislaege.dk/Ajax_get2017v1.asp",
     "https://www.basislaege.dk/Ajax_get2017v2.asp",
-    "https://www.basislaege.dk/Ajax_get2018v1.asp"
+    "https://www.basislaege.dk/Ajax_get2018v1.asp",
+    "https://www.basislaege.dk/Ajax_get2018v2.asp"
     // Aktuelle: andet format, 'https://www.basislaege.dk/AJAX_Timelines.asp'
 ];
 
