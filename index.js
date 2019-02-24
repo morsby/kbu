@@ -1,9 +1,16 @@
 //const HtmlTableToJson = require('html-table-to-json');
 //const DOMParser = require('xmldom').DOMParser;
-const cheerio = require("cheerio");
+
 const request = require("async-request");
 const fs = require("fs");
+const _ = require("lodash");
 //const curl = require('curl');
+
+const analyseHistoricRound = require("./analyseHistoricRound")
+    .analyseHistoricRound;
+
+const analyseDraft = require("./analyseLatestRound").analyseDraft;
+const analyseLatestRound = require("./analyseLatestRound").analyseLatestRound;
 
 const kbus = [
     "https://www.basislaege.dk/Ajax_get2010v2.asp",
@@ -23,92 +30,69 @@ const kbus = [
     "https://www.basislaege.dk/Ajax_get2017v2.asp",
     "https://www.basislaege.dk/Ajax_get2018v1.asp",
     "https://www.basislaege.dk/Ajax_get2018v2.asp"
-    // Aktuelle: andet format, 'https://www.basislaege.dk/AJAX_Timelines.asp'
 ];
 
 const getPicks = kbus.map(async url => {
     let response = await request(url);
-    let picks = analyseTable(url, response.body);
+    let picks = analyseHistoricRound(url, response.body);
     return picks;
 });
 
-const analyseTable = (url, html) => {
-    const $ = cheerio.load(html);
-    let picks = [];
-    let headers = [];
-    $("tbody > tr")
-        .first()
-        .children()
-        .each((i, elem) => {
-            headers.push(
-                $(elem)
-                    .text()
-                    .trim()
-            );
-        });
+const getLatestRound = async url => {
+    let draftHtml = await request("https://www.basislaege.dk/AJAX_Draft.asp"),
+        roundHtml = await request(
+            "https://www.basislaege.dk/AJAX_Timelines.asp"
+        ),
+        draft = analyseDraft(
+            "https://www.basislaege.dk/AJAX_Draft.asp",
+            draftHtml.body
+        ),
+        round = analyseLatestRound(
+            "https://www.basislaege.dk/AJAX_Timelines.asp",
+            roundHtml.body
+        );
 
-    headers.push("Uddannelsessted2", "Afdeling2", "Speciale2", "Runde");
+    round.map(choice => {
+        let chooser = _.find(draft, { Valgt_id: choice.id }) || {},
+            uni;
 
-    $("table#tlTable > tbody > tr + tr").each((i, elem) => {
-        let pick = {};
-        pick.runde = url;
+        switch (chooser["Universitet"]) {
+            case "Aarhus Universitet":
+                uni = "AU";
+                break;
+            case "Aalborg Universitet":
+                uni = "AAU";
+                break;
+            case "Københavns Universitet":
+                uni = "KU";
+                break;
+            case "Syddansk Universitet":
+                uni = "SDU";
+                break;
+            default:
+                uni = "";
+        }
+        choice["Lodtr."] = choice["Lodtr."].replace("?", uni);
 
-        $(elem)
-            .children("td")
-            .each((i, elem) => {
-                // Valgt dato og som nummer
-                if (i < 2) {
-                    pick[headers[i]] = $(elem)
-                        .text()
-                        .replace(/\s+$/, "") // fjern trailing whitespace
-                        .replace(/^\s/, ""); // fjern første ledende space
-                }
-                // Selve valget
-                if (i == 2) {
-                    $(elem)
-                        .find("tr td")
-                        .each((n, elem) => {
-                            // Region
-                            if (n == 0) {
-                                if ($(elem.text))
-                                    // hvis ikke tom
-                                    pick[headers[n + 2]] = $(elem)
-                                        .text()
-                                        .trim();
-                            }
-
-                            // Udd.sted, afdeling, speciale
-                            if (n >= 2 && n < 5) {
-                                pick[headers[n + 2]] = $(elem)
-                                    .text()
-                                    .trim();
-                            }
-
-                            if (n >= 7) {
-                                pick[headers[n]] = $(elem)
-                                    .text()
-                                    .trim();
-                            }
-                        });
-                }
-            });
-
-        picks.push(pick);
+        choice["Valgt"] = chooser["Tid"]
+            ? chooser["Tid"].replace("kl. ", "")
+            : "";
+        return choice;
     });
-    // Slet sidste
-    picks.splice(-1, 1);
-    return picks;
+    console.log("Draft: ", draft[0], "\nRound: ", round[0]);
+    return round;
 };
+
 allPicks = [];
-Promise.all(getPicks).then(completed => {
+Promise.all(getPicks).then(async completed => {
     allPicks = [];
     for (i = 0; i < completed.length; i++) {
         for (n = 0; n < completed[i].length; n++) {
             allPicks.push(completed[i][n]);
         }
     }
-
-    console.log(allPicks[0]);
+    let latestRound = await getLatestRound();
+    latestRound.map(el => allPicks.push(el));
 
     fs.writeFile("data.json", JSON.stringify(allPicks), () => {
         console.log("Wrote file");

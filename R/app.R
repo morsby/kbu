@@ -10,23 +10,21 @@ load("dk-map.RData")
 data <- read.csv("data.csv")
 
 # Rengør runder:
-data$runde <- gsub("(https://www.basislaege.dk/Ajax_get)|(.asp)", "", data$runde)
-data$runde <- gsub(" ", "", data$runde)
-
 specialer <- unique(c(as.character(data$Speciale),as.character(data$Speciale2)))
 
 for (i in 1:nrow(data)) {
     data[i, "Specialer"] <- paste(sort(c(as.character(data[i, "Speciale"]), as.character(data[i, "Speciale2"]))), sep=", ", collapse=", ")
-    
-    if(grepl("v1", data[i, "runde"])) {
-      data[i, "Runde"] <- as.Date(paste0(substr(data[i, "runde"],0,4),"-02-01"))
-    } else {
-      data[i, "Runde"] <- as.Date(paste0(substr(data[i, "runde"],0,4),"-08-01"))
-    }
-    
 }
 
-runder <- sort(unique(data[, "Runde"]), decreasing = TRUE)
+data$Runde <- as.character(data$Runde)
+levels <- sort(unique(data$Rundestart))
+labels <- c()
+for(i in 1:length(levels)) {
+  labels <- c(labels, unique(data[data[,"Rundestart"] == levels[i],"Runde"]))
+}
+runder <- sort(factor(unique(data$Rundestart), levels=levels, labels=labels), decreasing = T)
+data$Rundestart <- as.Date(data$Rundestart)
+
 speciale.komb <- unique(data[, "Specialer"])
 
 # Pool byer
@@ -39,8 +37,8 @@ byer <- list(
     Holbæk = c("Holbæk"),
     Køge = c("Køge", "Sjællands Universitetshospital"),
     Roskilde = c("Roskilde"),
-    Slagelse = c("Slagelse"),
     Næstved = c("Næstved"),
+    Slagelse = c("Slagelse"),
     
     # Nordjylland
     Hjørring = c("Hjørring", "Vendsyssel"),
@@ -89,7 +87,7 @@ data <- data %>%
     mutate(Popularitet=mean(PlaceringIAar))
 
 server <- function(input, output) {
-  filtered.data <- reactive(filter(data, Område %in% input$byer & Specialer %in% input$specialer & format(Runde) %in% input$runder))
+  filtered.data <- reactive(filter(data, Område %in% input$byer & Specialer %in% input$specialer & Runde %in% input$runder))
   
     # Map
     output$map <- renderPlot({
@@ -151,8 +149,9 @@ server <- function(input, output) {
     output$tidsudvikling <- renderPlot({
       if(length(input$byer) > 0) {
         
-        ggplot(data=filter(data, Område %in% input$byer & Specialer %in% input$specialer), aes(x=Runde, y=PlaceringIAar, color=Område)) + 
+        ggplot(data=filter(data, Område %in% input$byer & Specialer %in% input$specialer), aes(x=Rundestart, y=PlaceringIAar, color=Område)) + 
           geom_point() + geom_smooth() +
+          scale_x_date(date_labels="%Y") +
           geom_hline(yintercept=intercept()) +
           labs(y="Popularitet. 0=Mindst, 1=Størst", x="") +
           ylim(0,1) 
@@ -193,15 +192,19 @@ server <- function(input, output) {
 }
 
 ui <- fluidPage(
-    titlePanel("KBU-statistik 2010-2018"),
+    titlePanel("KBU-statistik 2010-2019"),
     
     HTML(markdownToHTML(fragment.only=TRUE, text=c(
 "Denne lille interaktive hjemmeside indeholder statistik over KBU-fordelinger siden 2010. 
-Data er hentet ud fra de tabeller, der ses på [basislaege.dk](http://basislaege.dk) under `Historik`.
+Data er hentet ud fra de tabeller, der ses på [basislaege.dk](http://basislaege.dk) under `Historik`
+samt den seneste fordeling (via `Alle` og `Fordeling`).
 
 Da der er et forskelligt antal numre hver lodtrækningsrunde, har jeg givet alle lodtrækningsnumre
 en ny værdi ud fra formlen: `Placering = 1-nummer/(antal numre denne runde)`. Herved vil et 
 tidligt valgt forløb have en værdi tæt på 1, mens et sent valgt forløb vil være tættere på 0.
+
+I skrivende stund er alle uvalgte forløb frafiltrerede, hvilket selvfølgelig giver et bias blandt
+de mest upopulære steder.
 
 Alle hospitaler er poolet i byer. Så alle hospitaler i København vil være at findes under KBH,
 alle hospitaler i Aarhus vil ligeledes være under ét. 
