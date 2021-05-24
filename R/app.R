@@ -196,7 +196,7 @@ ui <- fluidPage(
     
     HTML(markdownToHTML(fragment.only=TRUE, text=c(
 "Denne lille interaktive hjemmeside indeholder statistik over KBU-fordelinger siden 2010. 
-Data er hentet ud fra de tabeller, der ses på [basislaege.dk](http://basislaege.dk) under `Historik`
+Data er hentet ud fra de tabeller, der ses på [kbu.logbog.net](http://kbu.logbog.net) under `Historik`
 samt den seneste fordeling (via `Alle` og `Fordeling`).
 
 Da der er et forskelligt antal numre hver lodtrækningsrunde, har jeg givet alle lodtrækningsnumre

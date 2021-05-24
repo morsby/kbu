@@ -13,23 +13,26 @@ const analyseDraft = require("./analyseLatestRound").analyseDraft;
 const analyseLatestRound = require("./analyseLatestRound").analyseLatestRound;
 
 const kbus = [
-    "https://www.basislaege.dk/Ajax_get2010v2.asp",
-    "https://www.basislaege.dk/Ajax_get2011v1.asp",
-    "https://www.basislaege.dk/Ajax_get2011v2.asp",
-    "https://www.basislaege.dk/Ajax_get2012v1.asp",
-    "https://www.basislaege.dk/Ajax_get2012v2.asp",
-    "https://www.basislaege.dk/Ajax_get2013v1.asp",
-    "https://www.basislaege.dk/Ajax_get2013v2.asp",
-    "https://www.basislaege.dk/Ajax_get2014v1.asp",
-    "https://www.basislaege.dk/Ajax_get2014v2.asp",
-    "https://www.basislaege.dk/Ajax_get2015v1.asp",
-    "https://www.basislaege.dk/Ajax_get2015v2.asp",
-    "https://www.basislaege.dk/Ajax_get2016v1.asp",
-    "https://www.basislaege.dk/Ajax_get2016v2.asp",
-    "https://www.basislaege.dk/Ajax_get2017v1.asp",
-    "https://www.basislaege.dk/Ajax_get2017v2.asp",
-    "https://www.basislaege.dk/Ajax_get2018v1.asp",
-    "https://www.basislaege.dk/Ajax_get2018v2.asp"
+    "https://kbu.logbog.net/Ajax_get2010v2.asp",
+    "https://kbu.logbog.net/Ajax_get2011v1.asp",
+    "https://kbu.logbog.net/Ajax_get2011v2.asp",
+    "https://kbu.logbog.net/Ajax_get2012v1.asp",
+    "https://kbu.logbog.net/Ajax_get2012v2.asp",
+    "https://kbu.logbog.net/Ajax_get2013v1.asp",
+    "https://kbu.logbog.net/Ajax_get2013v2.asp",
+    "https://kbu.logbog.net/Ajax_get2014v1.asp",
+    "https://kbu.logbog.net/Ajax_get2014v2.asp",
+    "https://kbu.logbog.net/Ajax_get2015v1.asp",
+    "https://kbu.logbog.net/Ajax_get2015v2.asp",
+    "https://kbu.logbog.net/Ajax_get2016v1.asp",
+    "https://kbu.logbog.net/Ajax_get2016v2.asp",
+    "https://kbu.logbog.net/Ajax_get2017v1.asp",
+    "https://kbu.logbog.net/Ajax_get2017v2.asp",
+    "https://kbu.logbog.net/Ajax_get2018v1.asp",
+    "https://kbu.logbog.net/Ajax_get2018v2.asp",
+    "https://kbu.logbog.net/Ajax_get2019v1.asp",
+    "https://kbu.logbog.net/Ajax_get2019v2.asp",
+    "https://kbu.logbog.net/Ajax_get2020v1.asp",
 ];
 
 const getPicks = kbus.map(async url => {
@@ -39,16 +42,16 @@ const getPicks = kbus.map(async url => {
 });
 
 const getLatestRound = async url => {
-    let draftHtml = await request("https://www.basislaege.dk/AJAX_Draft.asp"),
+    let draftHtml = await request("https://kbu.logbog.net/AJAX_Draft.asp"),
         roundHtml = await request(
-            "https://www.basislaege.dk/AJAX_Timelines.asp"
+            "https://kbu.logbog.net/AJAX_Timelines.asp"
         ),
         draft = analyseDraft(
-            "https://www.basislaege.dk/AJAX_Draft.asp",
+            "https://kbu.logbog.net/AJAX_Draft.asp",
             draftHtml.body
         ),
         round = analyseLatestRound(
-            "https://www.basislaege.dk/AJAX_Timelines.asp",
+            "https://kbu.logbog.net/AJAX_Timelines.asp",
             roundHtml.body
         );
 
@@ -92,11 +95,12 @@ Promise.all(getPicks).then(async completed => {
         }
     }
     let latestRound = await getLatestRound();
-    latestRound.map(el => allPicks.push(el));
+    latestRound.map(el => newPicks.push(el));
 
     fs.writeFile("data.json", JSON.stringify(allPicks), () => {
         console.log("Wrote file");
     });
+
 
     //console.log(completed.flatten());
 });
