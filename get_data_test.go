@@ -40,7 +40,7 @@ func Test_calculateRound(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := calculateRound(tt.args.str)
+			got, err := getRound(tt.args.str)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("calculateRound() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -60,38 +60,38 @@ func Test_calculateNumberUni(t *testing.T) {
 		name    string
 		args    args
 		number  int
-		uni     string
+		uni     University
 		wantErr bool
 	}{
 		{
 			name:   "should pass, regular space, no number",
 			args:   args{" KU"},
 			number: 0,
-			uni:    "KU",
+			uni:    UniversityKU,
 		},
 		{
 			name:   "should pass, regular space, with number",
 			args:   args{"123 KU"},
 			number: 123,
-			uni:    "KU",
+			uni:    UniversityKU,
 		},
 		{
 			name: "should pass, tab",
 			args: args{"3	KU"},
 			number: 3,
-			uni:    "KU",
+			uni:    UniversityKU,
 		},
 		{
 			name:   "should pass, weird space",
 			args:   args{" KU"},
 			number: 0,
-			uni:    "KU",
+			uni:    UniversityKU,
 		},
 		{
 			name:   "should work, no space",
 			args:   args{"1KU"},
 			number: 1,
-			uni:    "KU",
+			uni:    UniversityKU,
 		},
 		{
 			name:    "should fail, two words",
@@ -101,7 +101,7 @@ func Test_calculateNumberUni(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, got1, err := calculateNumberUni(tt.args.s)
+			got, got1, err := getNumberUni(tt.args.s)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("calculateNumberUni() error = %v, wantErr %v", err, tt.wantErr)
 				return

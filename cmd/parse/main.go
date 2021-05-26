@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
@@ -28,4 +29,11 @@ func main() {
 	}
 	fmt.Printf("Found %d selections in file\n", len(selections))
 
+	out, err := os.Create("data.json")
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+	enc := json.NewEncoder(out)
+	enc.Encode(selections)
 }

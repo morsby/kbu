@@ -30,11 +30,11 @@ findRunde <- function(startdato) {
   maaned <- split[2]
   aar <- split[3]
   if (maaned %in% efteraar) {
-    aarstid <- "Efterår"
+    Season <- "Efterår"
   } else {
-    aarstid <- "Forår"
+    Season <- "Forår"
   }
-  return(paste(aarstid, aar))
+  return(paste(Season, aar))
 }
 
 findRundestart <- function(runde) {

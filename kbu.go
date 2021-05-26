@@ -1,52 +1,24 @@
 package kbu
 
 import (
+	"crypto/md5"
 	"encoding/json"
+	"fmt"
 	"io"
 	"strings"
-	"time"
 )
 
-type RawFormat struct {
-	URL              string `json:"url"`
-	Valgt            string `json:"Valgt"`
-	Lodtr            string `json:"Lodtr."`
-	Region           string `json:"Region"`
-	Startdato        string `json:"Startdato"`
-	Uddannelsessted  string `json:"Uddannelsessted"`
-	Afdeling         string `json:"Afdeling"`
-	Speciale         string `json:"Speciale"`
-	Uddannelsessted2 string `json:"Uddannelsessted2"`
-	Afdeling2        string `json:"Afdeling2"`
-	Speciale2        string `json:"Speciale2"`
-}
+var ids map[string]bool = make(map[string]bool)
 
-type Season int
+func (s *Selection) GenerateID() string {
+	id := fmt.Sprintf("%x", md5.Sum([]byte(fmt.Sprintf("%v", s))))
 
-const (
-	SeasonFall Season = iota + 1
-	SeasonSpring
-)
+	for _, ok := ids[id]; ok; _, ok = ids[id] {
+		id += "a"
+	}
+	ids[id] = true
 
-type Round struct {
-	Season Season
-	Year   int
-}
-
-type Selection struct {
-	Runde            Round     `json:"runde"`
-	Dato             time.Time `json:"date"`
-	Universitet      string    `json:"universitet"`
-	Nummer           int       `json:"no"`
-	Region           string    `json:"region"`
-	Startdato        time.Time `json:"startdato"`
-	Uddannelsessted  string    `json:"uddannelsessted"`
-	Afdeling         string    `json:"afdeling"`
-	Speciale         string    `json:"speciale"`
-	Uddannelsessted2 string    `json:"uddannelsessted2"`
-	Afdeling2        string    `json:"afdeling2"`
-	Speciale2        string    `json:"speciale2"`
-	URL              string    `json:"url"`
+	return id
 }
 
 const latestUrl string = "https://kbu.logbog.net/AJAX_Timelines.asp"
@@ -58,12 +30,12 @@ func ParseRawJSON(r io.Reader) ([]Selection, error) {
 
 	data := make([]Selection, len(raw))
 	for i, r := range raw {
-		round, err := calculateRound(r.URL)
+		round, err := getRound(r.URL)
 		if err != nil {
 			return nil, err
 		}
 
-		number, uni, err := calculateNumberUni(r.Lodtr)
+		number, uni, err := getNumberUni(r.Lodtr)
 		if err != nil {
 			return nil, err
 		}
@@ -82,21 +54,29 @@ func ParseRawJSON(r io.Reader) ([]Selection, error) {
 			return nil, err
 		}
 
-		data[i] = Selection{
-			Runde:            round,
-			URL:              strings.TrimSpace(r.URL),
-			Universitet:      uni,
-			Nummer:           number,
-			Dato:             dato,
-			Region:           strings.TrimSpace(r.Region),
-			Startdato:        startdato,
-			Uddannelsessted:  strings.TrimSpace(r.Uddannelsessted),
-			Afdeling:         strings.TrimSpace(r.Afdeling),
-			Speciale:         strings.TrimSpace(r.Speciale),
-			Uddannelsessted2: strings.TrimSpace(r.Uddannelsessted2),
-			Afdeling2:        strings.TrimSpace(r.Afdeling2),
-			Speciale2:        strings.TrimSpace(r.Speciale2),
+		region, err := getRegion(r.Region)
+		if err != nil {
+			return nil, err
 		}
+
+		s := Selection{
+			Round:       round,
+			URL:         strings.TrimSpace(r.URL),
+			University:  uni,
+			Number:      number,
+			Date:        dato,
+			Region:      region,
+			Start:       startdato,
+			Place1:      strings.TrimSpace(r.Uddannelsessted),
+			Department1: strings.TrimSpace(r.Afdeling),
+			Specialty1:  strings.TrimSpace(r.Speciale),
+			Place2:      strings.TrimSpace(r.Uddannelsessted2),
+			Department2: strings.TrimSpace(r.Afdeling2),
+			Specialty2:  strings.TrimSpace(r.Speciale2),
+		}
+		s.ID = s.GenerateID()
+
+		data[i] = s
 	}
 	return data, nil
 }

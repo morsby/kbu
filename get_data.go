@@ -8,9 +8,9 @@ import (
 	"time"
 )
 
-// calculateRound calculates the given round from
+// getRound calculates the given round from
 // the url (of form https://kbu.logbog.net/Ajax_getYYYYv[12].asp) and returns a more readable format.
-func calculateRound(str string) (Round, error) {
+func getRound(str string) (Round, error) {
 	var year int
 	var season Season
 	var err error
@@ -39,9 +39,9 @@ func calculateRound(str string) (Round, error) {
 	return Round{Year: year, Season: season}, err
 }
 
-// calculateNumberUni calculates the pick number af university of the doctor
+// getNumberUni calculates the pick number af university of the doctor
 // or retuns an error if it's an invalid string (should be of form "n UNI")
-func calculateNumberUni(s string) (number int, uni string, err error) {
+func getNumberUni(s string) (number int, uni University, err error) {
 	// number not selected
 	if s == "" {
 		return -1, "", nil
@@ -61,7 +61,24 @@ func calculateNumberUni(s string) (number int, uni string, err error) {
 		}
 	}
 
-	uni = vals[2]
+	switch vals[2] {
+	case "AU":
+		uni = UniversityAU
+	case "KU":
+		uni = UniversityKU
+	case "SDU":
+		uni = UniversitySDU
+	case "AAU":
+		uni = UniversityAAU
+	case "":
+		uni = UniversityNA
+	default:
+		err = errors.New("cannot get university from" + s)
+	}
+	if err != nil {
+		return 0, "", err
+	}
+
 	return number, uni, nil
 }
 
@@ -157,4 +174,28 @@ func calculateDate(str string, yearOverride int) (date time.Time, err error) {
 	}
 
 	return time.Date(year, month, day, hour, min, 0, 0, loc), nil
+}
+
+func getRegion(s string) (Region, error) {
+	if strings.Contains(s, "Hoved") {
+		return RegionH, nil
+	}
+
+	if strings.Contains(s, "Nord") {
+		return RegionNord, nil
+	}
+
+	if strings.Contains(s, "Midt") {
+		return RegionMidt, nil
+	}
+
+	if strings.Contains(s, "Syd") {
+		return RegionSyd, nil
+	}
+
+	if strings.Contains(s, "Sj") {
+		return RegionSj, nil
+	}
+
+	return "", errors.New("cannot get region from" + s)
 }
