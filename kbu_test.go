@@ -51,6 +51,7 @@ func TestParseJSONRaw(t *testing.T) {
 					Date:        time.Date(2010, time.April, 9, 9, 0, 0, 0, location),
 					University:  "KU",
 					Number:      0,
+					RelNumber:   1.0,
 					Region:      RegionH,
 					Start:       time.Date(2010, time.September, 1, 0, 0, 0, 0, location),
 					Place1:      "Frederiksberg Hospital",
@@ -69,7 +70,7 @@ func TestParseJSONRaw(t *testing.T) {
 				{
 					"url": "https://kbu.logbog.net/Ajax_get2015v1.asp",
 					"Valgt": "10. okt 13:20",
-					"Lodtr.": "316 KU",
+					"Lodtr.": "1 KU",
 					"Region": "Midt.",
 					"Startdato": "1. feb 15",
 					"Uddannelsessted": "Hospitaleenheden Vest, Regionshospitalet Holstebro",
@@ -82,7 +83,7 @@ func TestParseJSONRaw(t *testing.T) {
 				  {
 					"url": "https://kbu.logbog.net/Ajax_get2015v1.asp",
 					"Valgt": "10. okt 13:31",
-					"Lodtr.": "317 AU",
+					"Lodtr.": "2 AU",
 					"Region": "Nord.",
 					"Startdato": "1. mar 15",
 					"Uddannelsessted": "Aalborg Universitetshospital",
@@ -98,7 +99,8 @@ func TestParseJSONRaw(t *testing.T) {
 					Round:       Round{Year: 2015, Season: SeasonSpring},
 					Date:        time.Date(2014, time.October, 10, 13, 20, 0, 0, location), // "10. okt 13:20",
 					University:  "KU",
-					Number:      316,
+					Number:      1,
+					RelNumber:   0.5,
 					Region:      RegionMidt,
 					Start:       time.Date(2015, time.February, 1, 0, 0, 0, 0, location), //"1. feb 15",
 					Place1:      "Hospitaleenheden Vest, Regionshospitalet Holstebro",
@@ -113,7 +115,8 @@ func TestParseJSONRaw(t *testing.T) {
 					Round:       Round{Year: 2015, Season: SeasonSpring},
 					Date:        time.Date(2014, time.October, 10, 13, 31, 0, 0, location), //"10. okt 13:31",
 					University:  "AU",
-					Number:      317,
+					Number:      2,
+					RelNumber:   0,
 					Region:      RegionNord,
 					Start:       time.Date(2015, time.March, 1, 0, 0, 0, 0, location), //"1. mar 15",
 					Place1:      "Aalborg Universitetshospital",
@@ -131,7 +134,7 @@ func TestParseJSONRaw(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := ParseRawJSON(tt.args.r)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("ParseJSONRaw() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("ParseJSONRaw() error = %+v, wantErr %+v", err, tt.wantErr)
 				return
 			}
 
@@ -141,102 +144,7 @@ func TestParseJSONRaw(t *testing.T) {
 			}
 
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ParseJSON() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestSelection_GenerateID(t *testing.T) {
-	type fields struct {
-		ID               string
-		Runde            Round
-		Dato             time.Time
-		Universitet      University
-		Nummer           int
-		Region           Region
-		Startdato        time.Time
-		Uddannelsessted  string
-		Afdeling         string
-		Speciale         string
-		Uddannelsessted2 string
-		Afdeling2        string
-		Speciale2        string
-		URL              string
-	}
-	tests := []struct {
-		name       string
-		selections []fields
-		want       []string
-	}{
-		{
-			name: "one selection",
-			selections: []fields{
-				{
-					Runde:  Round{Year: 2020, Season: SeasonFall},
-					Dato:   time.Date(2020, time.January, 11, 0, 0, 0, 0, location),
-					Nummer: 123,
-				},
-			},
-			want: []string{"fc5324f84d18dbcbd027708f7d0c4a82"},
-		},
-		{
-			name: "two selections, different",
-			selections: []fields{
-				{
-					Runde:     Round{Year: 2020, Season: SeasonFall},
-					Dato:      time.Date(2020, time.January, 11, 0, 0, 0, 0, location),
-					Nummer:    999,
-					Startdato: time.Date(2020, time.January, 11, 0, 0, 0, 0, location),
-				},
-				{
-					Runde:     Round{Year: 2020, Season: SeasonFall},
-					Dato:      time.Date(2020, time.January, 11, 0, 0, 0, 0, location),
-					Nummer:    123,
-					Startdato: time.Date(2020, time.January, 11, 0, 0, 0, 0, location),
-				},
-			},
-			want: []string{"5c54c6a8fec824c7e853bb34d3a2ee05", "6ceb0665e1cf6c28779b94b0bfd090da"},
-		},
-		{
-			name: "two selections, the same; IDs should be unique",
-			selections: []fields{
-				{
-					Runde:     Round{Year: 2020, Season: SeasonFall},
-					Nummer:    143,
-					Startdato: time.Date(2020, time.January, 11, 0, 0, 0, 0, location),
-				},
-				{
-					Runde:     Round{Year: 2020, Season: SeasonFall},
-					Nummer:    143,
-					Startdato: time.Date(2020, time.January, 11, 0, 0, 0, 0, location),
-				},
-			},
-			want: []string{"4d0216bfca96b729111be3730ff56a8c", "4d0216bfca96b729111be3730ff56a8ca"},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			for i, sel := range tt.selections {
-				s := &Selection{
-					ID:          sel.ID,
-					Round:       sel.Runde,
-					Date:        sel.Dato,
-					University:  sel.Universitet,
-					Number:      sel.Nummer,
-					Region:      sel.Region,
-					Start:       sel.Startdato,
-					Place1:      sel.Uddannelsessted,
-					Department1: sel.Afdeling,
-					Specialty1:  sel.Speciale,
-					Place2:      sel.Uddannelsessted2,
-					Department2: sel.Afdeling2,
-					Specialty2:  sel.Speciale2,
-					URL:         sel.URL,
-				}
-				if got := s.GenerateID(); got != tt.want[i] {
-					t.Errorf("Selection.GenerateID() = %v, want %v", got, tt.want[i])
-				}
+				t.Errorf("ParseJSON() = %+v, want %+v", got, tt.want)
 			}
 		})
 	}

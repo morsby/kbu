@@ -28,12 +28,15 @@ func ParseRawJSON(r io.Reader) ([]Selection, error) {
 	dec := json.NewDecoder(r)
 	dec.Decode(&raw)
 
+	rounds := make(map[string]int)
+
 	data := make([]Selection, len(raw))
 	for i, r := range raw {
 		round, err := getRound(r.URL)
 		if err != nil {
 			return nil, err
 		}
+		rounds[fmt.Sprintf("%d-%s", round.Year, round.Season)]++
 
 		number, uni, err := getNumberUni(r.Lodtr)
 		if err != nil {
@@ -78,5 +81,10 @@ func ParseRawJSON(r io.Reader) ([]Selection, error) {
 
 		data[i] = s
 	}
+
+	for i := range data {
+		data[i].RelNumber = 1.0 - float64(data[i].Number)/float64(rounds[fmt.Sprintf("%d-%s", data[i].Round.Year, data[i].Round.Season)])
+	}
+
 	return data, nil
 }

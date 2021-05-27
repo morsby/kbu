@@ -54,6 +54,7 @@ type Selection struct {
 	Date        time.Time  `json:"date"`
 	University  University `json:"university"`
 	Number      int        `json:"no"`
+	RelNumber   float64    `json:"relNumber"`
 	Region      Region     `json:"region"`
 	Start       time.Time  `json:"start"`
 	Place1      string     `json:"place1"`

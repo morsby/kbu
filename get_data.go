@@ -52,7 +52,7 @@ func getNumberUni(s string) (number int, uni University, err error) {
 	uniNumberRegexp := regexp.MustCompile(`^([0-9]*)\s*([A-za-z]*)$`)
 	vals := uniNumberRegexp.FindStringSubmatch(s)
 	if len(vals) != 3 {
-		return 0, "", errors.New("cannot calculate number and uni; invalid input format")
+		return 0, "", errors.New("cannot calculate number and uni; invalid input format:" + s)
 	}
 	if vals[1] != "" {
 		number, err = strconv.Atoi(vals[1])
