@@ -1,25 +1,11 @@
 package kbu
 
 import (
-	"crypto/md5"
 	"encoding/json"
 	"fmt"
 	"io"
 	"strings"
 )
-
-var ids map[string]bool = make(map[string]bool)
-
-func (s *Selection) GenerateID() string {
-	id := fmt.Sprintf("%x", md5.Sum([]byte(fmt.Sprintf("%v", s))))
-
-	for _, ok := ids[id]; ok; _, ok = ids[id] {
-		id += "a"
-	}
-	ids[id] = true
-
-	return id
-}
 
 const latestUrl string = "https://kbu.logbog.net/AJAX_Timelines.asp"
 
@@ -63,19 +49,25 @@ func ParseRawJSON(r io.Reader) ([]Selection, error) {
 		}
 
 		s := Selection{
-			Round:       round,
-			URL:         strings.TrimSpace(r.URL),
-			University:  uni,
-			Number:      number,
-			Date:        dato,
-			Region:      region,
-			Start:       startdato,
-			Place1:      strings.TrimSpace(r.Uddannelsessted),
-			Department1: strings.TrimSpace(r.Afdeling),
-			Specialty1:  strings.TrimSpace(r.Speciale),
-			Place2:      strings.TrimSpace(r.Uddannelsessted2),
-			Department2: strings.TrimSpace(r.Afdeling2),
-			Specialty2:  strings.TrimSpace(r.Speciale2),
+			Round:      round,
+			URL:        strings.TrimSpace(r.URL),
+			University: uni,
+			Number:     number,
+			Date:       dato,
+			Region:     region,
+			Start:      startdato,
+			Positions: []Position{
+				{
+					Location:   strings.TrimSpace(r.Uddannelsessted),
+					Department: strings.TrimSpace(r.Afdeling),
+					Specialty:  strings.TrimSpace(r.Speciale),
+				},
+				{
+					Location:   strings.TrimSpace(r.Uddannelsessted2),
+					Department: strings.TrimSpace(r.Afdeling2),
+					Specialty:  strings.TrimSpace(r.Speciale2),
+				},
+			},
 		}
 		s.ID = s.GenerateID()
 
