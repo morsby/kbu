@@ -82,6 +82,9 @@ func getNumberUni(s string) (number int, uni University, err error) {
 	return number, uni, nil
 }
 
+// calculateDate calculates the date from a string of format either
+// "10. okt 13:20" (needs yearOverride) || "1. feb 15",
+// allowing parsing of Danish month abbreviations.
 func calculateDate(str string, yearOverride int) (date time.Time, err error) {
 	if str == "" {
 		return time.Time{}, nil
@@ -176,6 +179,7 @@ func calculateDate(str string, yearOverride int) (date time.Time, err error) {
 	return time.Date(year, month, day, hour, min, 0, 0, loc), nil
 }
 
+// getRegions converts a string to its corresponding Region type
 func getRegion(s string) (Region, error) {
 	if strings.Contains(s, "Hoved") {
 		return RegionH, nil
