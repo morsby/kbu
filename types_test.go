@@ -21,7 +21,6 @@ func TestSelection_GenerateID(t *testing.T) {
 		Uddannelsessted2 string
 		Afdeling2        string
 		Speciale2        string
-		URL              string
 	}
 	tests := []struct {
 		name       string
@@ -37,7 +36,7 @@ func TestSelection_GenerateID(t *testing.T) {
 					Nummer: 123,
 				},
 			},
-			want: []string{"6920ef53ee9c4ef27b7f899624ccd160"},
+			want: []string{"3306b9a58533f1f952d65b5485467381"},
 		},
 		{
 			name: "two selections, different",
@@ -55,7 +54,7 @@ func TestSelection_GenerateID(t *testing.T) {
 					Startdato: time.Date(2020, time.January, 11, 0, 0, 0, 0, location),
 				},
 			},
-			want: []string{"f22b6b976c4d572bef19d6de504ab450", "627a355b942b5b82a92895346d45dd79"},
+			want: []string{"67bfdf2e27b92f66dd14bd660575b10c", "99f4fc8891832d8ad4a010d5e052a198"},
 		},
 		{
 			name: "two selections, the same; IDs should be unique",
@@ -71,7 +70,7 @@ func TestSelection_GenerateID(t *testing.T) {
 					Startdato: time.Date(2020, time.January, 11, 0, 0, 0, 0, location),
 				},
 			},
-			want: []string{"d8394c4dbcdeb3ae0c1c725e78eeb71b", "d8394c4dbcdeb3ae0c1c725e78eeb71ba"},
+			want: []string{"030af0a9c671f134df0a92d0d18604de", "030af0a9c671f134df0a92d0d18604dea"},
 		},
 	}
 	for _, tt := range tests {
@@ -93,7 +92,6 @@ func TestSelection_GenerateID(t *testing.T) {
 							Department: sel.Afdeling2,
 							Specialty:  sel.Speciale2},
 					},
-					URL: sel.URL,
 				}
 				if got := s.GenerateID(); got != tt.want[i] {
 					t.Errorf("Selection.GenerateID() = %v, want %v", got, tt.want[i])
@@ -114,7 +112,6 @@ func TestSelection_Flatten(t *testing.T) {
 		Region     Region
 		Start      time.Time
 		Positions  []Position
-		URL        string
 	}
 	tests := []struct {
 		name   string
@@ -176,7 +173,6 @@ func TestSelection_Flatten(t *testing.T) {
 				Region:     tt.fields.Region,
 				Start:      tt.fields.Start,
 				Positions:  tt.fields.Positions,
-				URL:        tt.fields.URL,
 			}
 			if got := s.Flatten(); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Selection.Flatten() = %v, want %v", got, tt.want)

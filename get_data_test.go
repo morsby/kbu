@@ -19,12 +19,12 @@ func Test_calculateRound(t *testing.T) {
 		{
 			name: "Correct format",
 			args: args{"https://kbu.logbog.net/Ajax_get2010v2.asp"},
-			want: Round{Year: 2010, Season: SeasonFall},
+			want: Round{Year: 2010, Season: SeasonFall, URL: "https://kbu.logbog.net/Ajax_get2010v2.asp"},
 		},
 		{
 			name: "Correct format",
 			args: args{"https://kbu.logbog.net/Ajax_get2020v1.asp"},
-			want: Round{Year: 2020, Season: SeasonSpring},
+			want: Round{Year: 2020, Season: SeasonSpring, URL: "https://kbu.logbog.net/Ajax_get2020v1.asp"},
 		},
 		{
 			name:    "Invalid format",
@@ -35,7 +35,7 @@ func Test_calculateRound(t *testing.T) {
 		{
 			name: "Latest round",
 			args: args{"https://kbu.logbog.net/AJAX_Timelines.asp"},
-			want: Round{Year: 2020, Season: SeasonFall},
+			want: Round{Year: 2020, Season: SeasonFall, URL: "https://kbu.logbog.net/AJAX_Timelines.asp"},
 		},
 	}
 	for _, tt := range tests {

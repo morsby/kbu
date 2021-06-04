@@ -47,7 +47,7 @@ func TestParseJSONRaw(t *testing.T) {
 			]`)},
 			want: []Selection{
 				{
-					Round:      Round{Year: 2010, Season: SeasonFall},
+					Round:      Round{Year: 2010, Season: SeasonFall, URL: "https://kbu.logbog.net/Ajax_get2010v2.asp"},
 					Date:       time.Date(2010, time.April, 9, 9, 0, 0, 0, location),
 					University: "KU",
 					Number:     0,
@@ -66,7 +66,6 @@ func TestParseJSONRaw(t *testing.T) {
 							Specialty:  "Almen medicin",
 						},
 					},
-					URL: "https://kbu.logbog.net/Ajax_get2010v2.asp",
 				},
 			},
 		},
@@ -102,7 +101,7 @@ func TestParseJSONRaw(t *testing.T) {
 			]`)},
 			want: []Selection{
 				{
-					Round:      Round{Year: 2015, Season: SeasonSpring},
+					Round:      Round{Year: 2015, Season: SeasonSpring, URL: "https://kbu.logbog.net/Ajax_get2015v1.asp"},
 					Date:       time.Date(2014, time.October, 10, 13, 20, 0, 0, location), // "10. okt 13:20",
 					University: "KU",
 					Number:     1,
@@ -121,10 +120,9 @@ func TestParseJSONRaw(t *testing.T) {
 							Specialty:  "Almen medicin",
 						},
 					},
-					URL: "https://kbu.logbog.net/Ajax_get2015v1.asp",
 				},
 				{
-					Round:      Round{Year: 2015, Season: SeasonSpring},
+					Round:      Round{Year: 2015, Season: SeasonSpring, URL: "https://kbu.logbog.net/Ajax_get2015v1.asp"},
 					Date:       time.Date(2014, time.October, 10, 13, 31, 0, 0, location), //"10. okt 13:31",
 					University: "AU",
 					Number:     2,
@@ -143,7 +141,6 @@ func TestParseJSONRaw(t *testing.T) {
 							Specialty:  "Almen medicin",
 						},
 					},
-					URL: "https://kbu.logbog.net/Ajax_get2015v1.asp",
 				},
 			},
 		},

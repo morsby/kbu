@@ -56,6 +56,7 @@ const (
 type Round struct {
 	Season Season `json:"season"`
 	Year   int    `json:"year"`
+	URL    string `json:"url"`
 }
 
 // Position contains information on a Position
@@ -76,7 +77,6 @@ type Selection struct {
 	Region     Region     `json:"region"`
 	Start      time.Time  `json:"start"`
 	Positions  []Position `json:"positions"`
-	URL        string     `json:"url"`
 }
 
 var ids map[string]bool = make(map[string]bool)
@@ -101,6 +101,7 @@ type SelectionFlat struct {
 	ID          string     `json:"id"`
 	RoundYear   int        `json:"roundYear"`
 	RoundSeason Season     `json:"roundSeason"`
+	RoundURL    string     `json:"roundUrl"`
 	Date        time.Time  `json:"date"`
 	University  University `json:"university"`
 	Number      int        `json:"no"`
@@ -113,7 +114,6 @@ type SelectionFlat struct {
 	Location2   string     `json:"location2"`
 	Department2 string     `json:"department2"`
 	Specialty2  string     `json:"specialty2"`
-	URL         string     `json:"url"`
 }
 
 // Flatten flattens a Selection (i.e. flattens the nested struct Round and slice Positions)
@@ -122,6 +122,7 @@ func (s Selection) Flatten() SelectionFlat {
 	flat.ID = s.ID
 	flat.RoundYear = s.Round.Year
 	flat.RoundSeason = s.Round.Season
+	flat.RoundURL = s.Round.URL
 	flat.Date = s.Date
 	flat.University = s.University
 	flat.Number = s.Number
@@ -134,7 +135,6 @@ func (s Selection) Flatten() SelectionFlat {
 	flat.Location2 = s.Positions[1].Location
 	flat.Department2 = s.Positions[1].Department
 	flat.Specialty2 = s.Positions[1].Specialty
-	flat.URL = s.URL
 
 	return flat
 }

@@ -22,11 +22,14 @@ func ParseRawJSON(r io.Reader) ([]Selection, error) {
 		if err != nil {
 			return nil, err
 		}
-		rounds[fmt.Sprintf("%d-%s", round.Year, round.Season)]++
 
 		number, uni, err := getNumberUni(r.Lodtr)
 		if err != nil {
 			return nil, err
+		}
+		// if the selection wasn't taken, it should not add to number of doctors that year
+		if number > -1 {
+			rounds[fmt.Sprintf("%d-%s", round.Year, round.Season)]++
 		}
 
 		startdato, err := calculateDate(r.Startdato, 0)
@@ -50,7 +53,6 @@ func ParseRawJSON(r io.Reader) ([]Selection, error) {
 
 		s := Selection{
 			Round:      round,
-			URL:        strings.TrimSpace(r.URL),
 			University: uni,
 			Number:     number,
 			Date:       dato,
@@ -79,4 +81,12 @@ func ParseRawJSON(r io.Reader) ([]Selection, error) {
 	}
 
 	return data, nil
+}
+
+func FlattenSelections(selections []Selection) []SelectionFlat {
+	flattened := make([]SelectionFlat, 0, len(selections))
+	for _, sel := range selections {
+		flattened = append(flattened, sel.Flatten())
+	}
+	return flattened
 }

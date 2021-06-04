@@ -10,21 +10,21 @@ import (
 
 // getRound calculates the given round from
 // the url (of form https://kbu.logbog.net/Ajax_getYYYYv[12].asp) and returns a more readable format.
-func getRound(str string) (Round, error) {
+func getRound(url string) (Round, error) {
 	var year int
 	var season Season
 	var err error
-	if str == latestUrl {
+	if url == latestUrl {
 		year = 2020
 		season = SeasonFall
 	} else {
-		yStr := str[31:35]
+		yStr := url[31:35]
 		year, err = strconv.Atoi(yStr)
 		if err != nil {
 			return Round{}, err
 		}
 
-		switch str[36] {
+		switch url[36] {
 		case '1':
 			season = SeasonSpring
 		case '2':
@@ -36,14 +36,14 @@ func getRound(str string) (Round, error) {
 	if err != nil {
 		return Round{}, err
 	}
-	return Round{Year: year, Season: season}, err
+	return Round{Year: year, Season: season, URL: url}, err
 }
 
 // getNumberUni calculates the pick number af university of the doctor
 // or retuns an error if it's an invalid string (should be of form "n UNI")
 func getNumberUni(s string) (number int, uni University, err error) {
 	// number not selected
-	if s == "" {
+	if s == "" || s == "0" {
 		return -1, "", nil
 	}
 
