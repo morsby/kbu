@@ -155,7 +155,7 @@ func TestParseJSONRaw(t *testing.T) {
 
 			// override the calculated ID so tests dont fail on them
 			for i := 0; i < len(tt.want); i++ {
-				got[i].ID = ""
+				got[i].Md5 = ""
 			}
 
 			if !reflect.DeepEqual(got, tt.want) {

@@ -9,6 +9,30 @@ import (
 
 const latestUrl string = "https://kbu.logbog.net/AJAX_Timelines.asp"
 
+func ParseData(r io.Reader) ([]Round, error) {
+	selections, err := ParseRawJSON(r)
+	if err != nil {
+		return nil, err
+	}
+
+	rounds := make(map[string]Round)
+	for _, sel := range selections {
+		round, ok := rounds[sel.Round.URL]
+		if !ok {
+			round = sel.Round
+		}
+		sel.Round = Round{}
+		round.Selections = append(rounds[round.URL].Selections, sel)
+		rounds[round.URL] = round
+	}
+
+	roundsSlice := make([]Round, 0, len(rounds))
+	for _, v := range rounds {
+		roundsSlice = append(roundsSlice, v)
+	}
+	return roundsSlice, nil
+}
+
 func ParseRawJSON(r io.Reader) ([]Selection, error) {
 	var raw []RawFormat
 	dec := json.NewDecoder(r)
@@ -71,7 +95,7 @@ func ParseRawJSON(r io.Reader) ([]Selection, error) {
 				},
 			},
 		}
-		s.ID = s.GenerateID()
+		s.Md5 = s.GenerateID()
 
 		data[i] = s
 	}

@@ -4,6 +4,8 @@ import (
 	"crypto/md5"
 	"fmt"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 // RawFormat is the data format one gets when parsing the tables obtained at
@@ -54,27 +56,34 @@ const (
 
 // Round contains information on a round
 type Round struct {
-	Season Season `json:"season"`
-	Year   int    `json:"year"`
-	URL    string `json:"url"`
+	gorm.Model
+	Season     Season `json:"season" gorm:"uniqueIndex:idx_year_season"`
+	Year       int    `json:"year" gorm:"uniqueIndex:idx_year_season"`
+	URL        string `json:"url" gorm:"uniqueIndex:idx_url"`
+	Selections []Selection
+	Count      int
 }
 
 // Position contains information on a Position
 type Position struct {
-	Location   string `json:"location"`
-	Department string `json:"department"`
-	Specialty  string `json:"specialty"`
+	gorm.Model
+	SelectionID uint   `json:"selectionID"`
+	Location    string `json:"location"`
+	Department  string `json:"department"`
+	Specialty   string `json:"specialty"`
 }
 
 // Selection contains information on a selection
 type Selection struct {
-	ID         string     `json:"id"`
+	gorm.Model
+	Md5        string     `json:"md5"`
+	RoundID    uint       `json:"roundID"`
 	Round      Round      `json:"round"`
 	Date       time.Time  `json:"date"`
-	University University `json:"university"`
+	University University `json:"university" gorm:"index"`
 	Number     int        `json:"no"`
 	RelNumber  float64    `json:"relNumber"`
-	Region     Region     `json:"region"`
+	Region     Region     `json:"region" gorm:"index"`
 	Start      time.Time  `json:"start"`
 	Positions  []Position `json:"positions"`
 }
@@ -98,7 +107,7 @@ func (s *Selection) GenerateID() string {
 // SelectionFloat contains information about af selection without any
 // nested fields
 type SelectionFlat struct {
-	ID          string     `json:"id"`
+	Md5         string     `json:"md5"`
 	RoundYear   int        `json:"roundYear"`
 	RoundSeason Season     `json:"roundSeason"`
 	RoundURL    string     `json:"roundUrl"`
@@ -119,7 +128,7 @@ type SelectionFlat struct {
 // Flatten flattens a Selection (i.e. flattens the nested struct Round and slice Positions)
 func (s Selection) Flatten() SelectionFlat {
 	flat := SelectionFlat{}
-	flat.ID = s.ID
+	flat.Md5 = s.Md5
 	flat.RoundYear = s.Round.Year
 	flat.RoundSeason = s.Round.Season
 	flat.RoundURL = s.Round.URL

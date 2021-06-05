@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
@@ -37,31 +36,14 @@ func main() {
 		panic(err)
 	}
 	defer input.Close()
-	selections, err := kbu.ParseRawJSON(input)
-	flattened := kbu.FlattenSelections(selections)
+	rounds, err := kbu.ParseData(input)
 	if err != nil {
 		panic(err)
 	}
-
-	output, err := os.Create(*outputFlag)
+	dbConn, err := db.Connect()
 	if err != nil {
 		panic(err)
 	}
-	defer input.Close()
-	enc := json.NewEncoder(output)
-	enc.Encode(flattened)
-
-	fmt.Printf("Found %d selections in file and wrote to %s\n", len(selections), *outputFlag)
-
-	database := db.Connect()
-	db.CreateTables(database)
-
-	seeds := db.Seeds{
-		Regions:      []kbu.Region{kbu.RegionH, kbu.RegionMidt, kbu.RegionNord, kbu.RegionSj, kbu.RegionSyd},
-		Universities: []kbu.University{kbu.UniversityAAU, kbu.UniversityAU, kbu.UniversityKU, kbu.UniversitySDU, kbu.UniversityNA},
-	}
-	err = db.Seed(database, seeds)
-	if err != nil {
-		panic(err)
-	}
+	db.AutoMigrate(dbConn, &kbu.Round{}, &kbu.Selection{}, &kbu.Position{})
+	db.InsertRounds(dbConn, &rounds)
 }

@@ -8,7 +8,7 @@ import (
 
 func TestSelection_GenerateID(t *testing.T) {
 	type fields struct {
-		ID               string
+		Md5              string
 		Runde            Round
 		Dato             time.Time
 		Universitet      University
@@ -36,7 +36,7 @@ func TestSelection_GenerateID(t *testing.T) {
 					Nummer: 123,
 				},
 			},
-			want: []string{"3306b9a58533f1f952d65b5485467381"},
+			want: []string{"5904c63ef91b4b1b141f3e53e491f329"},
 		},
 		{
 			name: "two selections, different",
@@ -54,7 +54,7 @@ func TestSelection_GenerateID(t *testing.T) {
 					Startdato: time.Date(2020, time.January, 11, 0, 0, 0, 0, location),
 				},
 			},
-			want: []string{"67bfdf2e27b92f66dd14bd660575b10c", "99f4fc8891832d8ad4a010d5e052a198"},
+			want: []string{"2dbaf085f830790d1a1aefb34bfb7df0", "bae4df2f765246b7aeb2fb1f9e1b60fc"},
 		},
 		{
 			name: "two selections, the same; IDs should be unique",
@@ -70,14 +70,14 @@ func TestSelection_GenerateID(t *testing.T) {
 					Startdato: time.Date(2020, time.January, 11, 0, 0, 0, 0, location),
 				},
 			},
-			want: []string{"030af0a9c671f134df0a92d0d18604de", "030af0a9c671f134df0a92d0d18604dea"},
+			want: []string{"d076d36c26a1b9d2b1d33743eadec41b", "d076d36c26a1b9d2b1d33743eadec41ba"},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			for i, sel := range tt.selections {
 				s := &Selection{
-					ID:         sel.ID,
+					Md5:        sel.Md5,
 					Round:      sel.Runde,
 					Date:       sel.Dato,
 					University: sel.Universitet,
@@ -103,7 +103,7 @@ func TestSelection_GenerateID(t *testing.T) {
 
 func TestSelection_Flatten(t *testing.T) {
 	type fields struct {
-		ID         string
+		Md5        string
 		Round      Round
 		Date       time.Time
 		University University
@@ -121,7 +121,7 @@ func TestSelection_Flatten(t *testing.T) {
 		{
 			name: "Flattening a single Selection",
 			fields: fields{
-				ID:         "asd",
+				Md5:        "asd",
 				Round:      Round{Year: 2020, Season: SeasonFall},
 				Date:       time.Date(2020, 03, 9, 0, 0, 0, 0, location),
 				University: UniversityAU,
@@ -143,7 +143,7 @@ func TestSelection_Flatten(t *testing.T) {
 				},
 			},
 			want: SelectionFlat{
-				ID:          "asd",
+				Md5:         "asd",
 				RoundYear:   2020,
 				RoundSeason: SeasonFall,
 				Date:        time.Date(2020, 03, 9, 0, 0, 0, 0, location),
@@ -164,7 +164,7 @@ func TestSelection_Flatten(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := Selection{
-				ID:         tt.fields.ID,
+				Md5:        tt.fields.Md5,
 				Round:      tt.fields.Round,
 				Date:       tt.fields.Date,
 				University: tt.fields.University,
