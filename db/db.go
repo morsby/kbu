@@ -166,5 +166,6 @@ func Seed(db *sql.DB, seeds Seeds) error {
 }
 
 func InsertSelection(db *sql.DB, selections []kbu.Selection) (sql.Result, error) {
+
 	return nil, nil
 }
